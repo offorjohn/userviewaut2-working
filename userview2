@@ -1,0 +1,307 @@
+import axios from "axios";
+import * as React from 'react';
+import { useState } from 'react';
+
+import Box from '@mui/material/Box';
+import Table from '@mui/material/Table';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import { Container } from '@mui/system';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import Select from '@mui/material/Select';
+import { styled } from '@mui/material/styles';
+import TableRow from '@mui/material/TableRow';
+import MenuItem from '@mui/material/MenuItem';
+import TableBody from '@mui/material/TableBody';
+import TableHead from '@mui/material/TableHead';
+import Typography from '@mui/material/Typography';
+import DialogTitle from '@mui/material/DialogTitle';
+import FormControl from '@mui/material/FormControl';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import TableContainer from '@mui/material/TableContainer';
+import TablePagination from '@mui/material/TablePagination';
+import DialogContentText from '@mui/material/DialogContentText';
+import TableCell, { tableCellClasses } from '@mui/material/TableCell';
+
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.common.grey,
+    color: theme.palette.common.grey,
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+    paddingLeft: theme.spacing(1), // Adjust the left padding if needed
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:nth-of-type(odd)': {
+    backgroundColor: theme.palette.action.hover,
+  },
+  '&:last-child td, &:last-child th': {
+    border: 0,
+  },
+}));
+
+// eslint-disable-next-line no-unused-vars
+const handleLogin = async () => {
+  try {
+    // eslint-disable-next-line no-undef
+    const res = await login(username, password);
+    if (res.status) {
+      const paymentData = await ("otp", res.token);
+      // eslint-disable-next-line no-undef
+      setPayments(paymentData);
+      console.log(res);
+    }
+  } catch (error) {
+    console.error('Login or fetching payments failed:', error);
+  }
+};
+
+
+export default function CustomizedTables() {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  // eslint-disable-next-line no-empty-pattern
+  const [] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [maxWidth, setMaxWidth] = useState('sm'); // Default value for maxWidth
+  const [payments, setPayments] = useState([]);
+
+
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleMaxWidthChange = (event) => {
+    setMaxWidth(event.target.value);
+  };
+
+
+  React.useEffect(() => {
+    console.log('useEffect triggered');
+    const fetchPayments = async () => {
+      console.log('fetchPayments function called');
+      try {
+        const options = {
+          method: 'GET',
+          url: 'https://otpninja.com/api/v1/listpayments',
+          headers: { 'X-OTPNINJA-TOKEN': 'hLAPySpZEuGtGJVCbglgToIVLdjdssMR' }
+        };
+        const response = await axios.request(options);
+        console.log(options)
+        console.log(response)
+
+      console.log('Response received:', response);
+        setPayments(response.data.data);
+      } catch (error) {
+        console.error('Error fetching payments:', error);
+      }
+    };
+    fetchPayments();
+  }, []);
+  
+
+  // Create rows and sort them by date (earliest first)
+  const rows = payments
+    .map((payment) => ({
+      id: payment.reference, // Assuming `reference` is unique
+      amount: payment.amount,
+      description: payment.description,
+      date: new Date(payment.paymentdate), // Convert date string to Date object
+      message: payment.paymentmessage,
+    }))
+    .sort((a, b) => a.date - b.date); // Sort by date (earliest first)
+
+  // Handle page change
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  // Handle rows per page change
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+
+  // Calculate rows to display based on pagination
+  const paginatedRows = rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const isDesktop = useMediaQuery('(min-width:600px)');
+
+  return (
+    <Container>
+      <Box sx={{ mt: 4 }}>
+        <Stack
+          direction={isDesktop ? 'row' : 'column'}
+          alignItems={isDesktop ? 'center' : 'flex-start'}
+          justifyContent="space-between"
+          mb={5}
+          spacing={2}
+        >
+
+          <Typography
+            variant="h4"
+            sx={{
+              order: -1,
+              fontWeight: 'bold',
+              fontSize: '2rem',
+              marginLeft: '18px', // Adjust this value to move the text to the right
+              marginRight: '0', // Optionally reset any existing marginRight if needed
+            }}
+          >
+            Verifications
+          </Typography>
+
+          <Button
+            variant="contained"
+            onClick={handleClickOpen}
+            sx={{
+              position: 'relative',
+              top: '-20px',
+              width: '180px',
+
+              fontSize: isDesktop ? '1rem' : '0.75rem',
+              padding: isDesktop ? '8px 16px' : '6px 12px',
+              borderRadius: '9999px',
+              border: 0,
+              textAlign: 'center',
+              fontWeight: 'bold',
+              color: 'white',
+              backgroundColor: 'rgba(3, 105, 161)',
+              boxShadow: 1,
+              '&:hover': {
+                backgroundColor: 'rgba(3, 105, 161)',
+              },
+              '&:disabled': {
+                backgroundColor: 'gray',
+                color: 'darkgray',
+                cursor: 'default',
+              },
+              '&:focus': {
+                outline: 'none',
+                ring: 'rgba(3, 105, 161)',
+                ringOffset: '2px',
+              },
+            }}
+          >
+            Buy Number
+          </Button>
+        </Stack>
+
+        {/* Dialog for Buying Number */}
+        <Dialog
+          open={open}
+          onClose={handleClose}
+          fullWidth
+          maxWidth={maxWidth}
+          PaperProps={{
+            component: 'form',
+            onSubmit: (event) => {
+              event.preventDefault();
+              const formData = new FormData(event.currentTarget);
+              const formJson = Object.fromEntries(formData.entries());
+              const { email } = formJson;
+              console.log(email);
+            },
+          }}
+        >
+          <DialogTitle>Buy Number</DialogTitle>
+          <DialogContent>
+            <Stack direction="column" spacing={2} alignItems="flex-start">
+              <Stack direction="row" spacing={2} alignItems="flex-start" sx={{ width: '100%' }}>
+                {/* Price Section */}
+                <Box sx={{ width: '250px', maxWidth: '100%' }}>
+                  <DialogContentText>Select Country</DialogContentText>
+                  <FormControl sx={{ minWidth: '100%' }}>
+                    <Select
+                      autoFocus
+                      value={maxWidth}
+                      onChange={handleMaxWidthChange}
+                      label="Max Width"
+                      inputProps={{ name: 'max-width', id: 'max-width' }}
+                    >
+                      <MenuItem value="false">None</MenuItem>
+                      <MenuItem value="xs">xs</MenuItem>
+                      <MenuItem value="sm">sm</MenuItem>
+                      <MenuItem value="md">md</MenuItem>
+                      <MenuItem value="lg">lg</MenuItem>
+                      <MenuItem value="xl">xl</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+              </Stack>
+
+              {/* Text Above Amount Section */}
+              <DialogContentText sx={{ width: '500px', maxWidth: '100%', mt: 2 }}>
+                Price Coming Soon
+              </DialogContentText>
+
+
+            </Stack>
+          </DialogContent>
+
+          <DialogActions>
+            <Button
+              onClick={handleClose}
+              sx={{
+                color: 'white',
+                backgroundColor: 'red',
+                '&:hover': { backgroundColor: 'darkred' },
+              }}
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <TableContainer component={Paper}>
+          <Table sx={{ minWidth: 700 }} aria-label="customized table">
+            <TableHead>
+              <TableRow>
+                <StyledTableCell align="left">Amount</StyledTableCell>
+                <StyledTableCell align="left">Description</StyledTableCell>
+                <StyledTableCell align="left">Date</StyledTableCell>
+                <StyledTableCell align="left">Message</StyledTableCell>
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {paginatedRows.map((row) => (
+                <StyledTableRow key={row.id}>
+                  <StyledTableCell align="left">{row.amount}</StyledTableCell>
+                  <StyledTableCell align="left">{row.description}</StyledTableCell>
+                  <StyledTableCell align="left">
+                    {row.date.toLocaleDateString()}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">{row.message}</StyledTableCell>
+                </StyledTableRow>
+              ))}
+            </TableBody>
+
+
+          </Table>
+          <TablePagination
+            component="div"
+            count={rows.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[5, 10, 25]}
+          />
+        </TableContainer>
+      </Box>
+    </Container>
+  );
+}
